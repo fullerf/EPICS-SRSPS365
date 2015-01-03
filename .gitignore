@@ -38,7 +38,7 @@ Thumbs.dbi
 
 # Documentation and References #
 ################################
-.pdf
-.ppt
-.doc
-.docx
+*.pdf
+*.ppt
+*.doc
+*.docx
