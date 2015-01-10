@@ -48,8 +48,8 @@ for my $fileKey (keys %desiredHash) {
 ## move the .proto and .db into place if we have them.
 my $protoFile = 'dev' . $appName . '.proto';
 my $dbFile = 'dev' . $appName . '.db';
-system(("mv",'-f',$protoFile,'./' . $appName 'Sup/')) if (-e $protoFile);
-system(("mv",'-f',$dbFile,'./' . $appName 'Sup/')) if (-e $dbFile);
+system(("mv",'-f',$protoFile,'./' . $appName . 'Sup/')) if (-e $protoFile);
+system(("mv",'-f',$dbFile,'./' . $appName . 'Sup/')) if (-e $dbFile);
 
 system(("make"));
 
