@@ -32,7 +32,10 @@ for my $line (@outStr) {
     say $line;
 }
 
-#assume we're in $TOP
+#ensure we're in $TOP
+system(('cd',"$ENV{TOP}"));
+
+#then do stuff.
 system(("$ENV{ASYN}/bin/$ENV{EPICS_HOST_ARCH}/makeSupport.pl","-A","$ENV{ASYN}","-B","$ENV{EPICS_BASE}","-t","streamSCPI","$appName"));
 system(("rm","-rf","configure"));
 system(("$ENV{EPICS_BASE}/bin/$ENV{EPICS_HOST_ARCH}/makeBaseApp.pl","-a","$ENV{EPICS_HOST_ARCH}","-t","ioc",$appName . $ENV{APP_SUFFIX}));
@@ -41,6 +44,12 @@ system(("$ENV{EPICS_BASE}/bin/$ENV{EPICS_HOST_ARCH}/makeBaseApp.pl","-a",$ENV{EP
 for my $fileKey (keys %desiredHash) {
     replaceHashedVarsInFile(\$fileKey,$desiredHash{$fileKey});
 }
+
+## move the .proto and .db into place if we have them.
+my $protoFile = 'dev' . $appName . '.proto';
+my $dbFile = 'dev' . $appName . '.db';
+system(("mv",'-f',$protoFile,'./' . $appName 'Sup/')) if (-e $protoFile);
+system(("mv",'-f',$dbFile,'./' . $appName 'Sup/')) if (-e $dbFile);
 
 system(("make"));
 
