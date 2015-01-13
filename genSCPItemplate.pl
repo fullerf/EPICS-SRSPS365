@@ -118,8 +118,8 @@ sub replaceMacroInString {
         my $rb = shift(@_);
     }
     else {
-        my $lb = '('
-        my $rb = ')'
+        my $lb = '(';
+        my $rb = ')';
     }
     my @macroMatches = $$inputString =~ m/\$$lb([\w]+)$rb/g; #get all the keys in the string
     for my $key (@macroMatches) {
