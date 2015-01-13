@@ -113,7 +113,7 @@ sub replaceMacroInString {
     #fourth (optional): <right bracket> (see above)
     my $inputString = shift(@_); #pull string pointer from @_
     my $macroPointer = shift(@_); #pull hash pointer from @_
-    if scalar(@_) {
+    if ( scalar(@_) ) {
         my $lb = shift(@_);
         my $rb = shift(@_);
     }
@@ -139,7 +139,7 @@ sub replaceMacroInFile {
     # 3. (optional): <left bracket>  I use () brackets for most files, but [] for st.cmd
     # as there are already macros of the $() type in there.
     # 4. (optional): <right bracket>
-    if scalar(@_) {
+    if ( scalar(@_) ) {
         my $lb = shift(@_);
         my $rb = shift(@_);
     }
