@@ -141,13 +141,15 @@ sub replaceMacroInFile {
     # 3. (optional): <left bracket>  I use () brackets for most files, but [] for st.cmd
     # as there are already macros of the $() type in there.
     # 4. (optional): <right bracket>
+    my $lb = undef;
+    my $rb = undef;
     if ( scalar(@_) ) {
-        my $lb = shift(@_);
-        my $rb = shift(@_);
+        $lb = shift(@_);
+        $rb = shift(@_);
     }
     else {
-        my $lb = '(';
-        my $rb = ')';
+        $lb = '(';
+        $rb = ')';
     }
     my $fileName = abs_path(${shift(@_)});
     my $targetHash = shift(@_);
