@@ -113,13 +113,15 @@ sub replaceMacroInString {
     #fourth (optional): <right bracket> (see above)
     my $inputString = shift(@_); #pull string pointer from @_
     my $macroPointer = shift(@_); #pull hash pointer from @_
+    my $lb = undef;
+    my $rb = undef;
     if ( scalar(@_) ) {
-        my $lb = shift(@_);
-        my $rb = shift(@_);
+        $lb = shift(@_);
+        $rb = shift(@_);
     }
     else {
-        my $lb = '(';
-        my $rb = ')';
+        $lb = '(';
+        $rb = ')';
     }
     my @macroMatches = $$inputString =~ m/\$$lb([\w]+)$rb/g; #get all the keys in the string
     for my $key (@macroMatches) {
