@@ -113,16 +113,9 @@ sub replaceMacroInString {
     #fourth (optional): <right bracket> (see above)
     my $inputString = shift(@_); #pull string pointer from @_
     my $macroPointer = shift(@_); #pull hash pointer from @_
-    my $lb = undef;
-    my $rb = undef;
-    if ( scalar(@_) ) {
-        $lb = shift(@_);
-        $rb = shift(@_);
-    }
-    else {
-        $lb = '(';
-        $rb = ')';
-    }
+    my ($lb, $rb) = @_;
+    $lb = '(' unless defined $lb;
+    $rb = ')' unless defined $rb;
     my @macroMatches = $$inputString =~ m/\$$lb([\w]+)$rb/g; #get all the keys in the string
     for my $key (@macroMatches) {
         if (exists $$macroPointer{$key}) { 
@@ -141,18 +134,11 @@ sub replaceMacroInFile {
     # 3. (optional): <left bracket>  I use () brackets for most files, but [] for st.cmd
     # as there are already macros of the $() type in there.
     # 4. (optional): <right bracket>
-    my $lb = undef;
-    my $rb = undef;
-    if ( scalar(@_) ) {
-        $lb = shift(@_);
-        $rb = shift(@_);
-    }
-    else {
-        $lb = '(';
-        $rb = ')';
-    }
     my $fileName = abs_path(${shift(@_)});
     my $targetHash = shift(@_);
+    my ($lb, $rb) = @_;
+    $lb = '(' unless defined $lb;
+    $rb = ')' unless defined $rb;
    # say Dumper(\%$targetHash);
     open(my $fh,"+<",$fileName) || die "$0: can't open $fileName for updating: $!";
     my @fileSlurp = <$fh>; #slurp it up.
