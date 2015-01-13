@@ -53,7 +53,7 @@ my $dbFile = 'dev' . $appName . '.db';
 system(("cp",$protoFile,'./' . $appName . 'Sup/')) if (-e $protoFile);
 system(("cp",$dbFile,'./' . $appName . 'Sup/')) if (-e $dbFile);
 system(("rm","-rf",$protoFile)) if (-e $protoFile);
-system(("rm","-rf",$dbFile)) if (-2 $dbFile);
+system(("rm","-rf",$dbFile)) if (-e $dbFile);
 
 # edit the st.cmd file if it exists and move it into place
 my $stCmd = 'st.cmd';
