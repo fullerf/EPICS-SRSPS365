@@ -57,7 +57,7 @@ system(("rm","-rf",$dbFile)) if (-2 $dbFile);
 
 # edit the st.cmd file if it exists and move it into place
 my $stCmd = 'st.cmd';
-my $stCmdPath = catfile($ENV{TOP},$stCmd)
+my $stCmdPath = catfile($ENV{TOP},$stCmd);
 replaceMacroInFile(\$stCmdPath,\%ENV,'[',']');
 system(("cp",$stCmd,'./iocBoot/' . 'ioc' . $appName . '/')) if (-e $stCmd);
 system(("rm","-rf",$stCmd)) if (-e $stCmd);
