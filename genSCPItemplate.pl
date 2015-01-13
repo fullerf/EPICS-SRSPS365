@@ -33,34 +33,34 @@ for my $line (@outStr) {
     say $line;
 }
 
-#ensure we're in $TOP
-system(('cd',"$ENV{TOP}"));
+##ensure we're in $TOP
+#system(('cd',"$ENV{TOP}"));
 
-#call perl template creation scripts
-system(("$ENV{ASYN}/bin/$ENV{EPICS_HOST_ARCH}/makeSupport.pl","-A","$ENV{ASYN}","-B","$ENV{EPICS_BASE}","-t","streamSCPI","$appName"));
-system(("rm","-rf","configure"));
-system(("$ENV{EPICS_BASE}/bin/$ENV{EPICS_HOST_ARCH}/makeBaseApp.pl","-a","$ENV{EPICS_HOST_ARCH}","-t","ioc",$appName . $ENV{APP_SUFFIX}));
-system(("$ENV{EPICS_BASE}/bin/$ENV{EPICS_HOST_ARCH}/makeBaseApp.pl","-a",$ENV{EPICS_HOST_ARCH},"-t","ioc","-i",$appName . $ENV{APP_SUFFIX}));
+##call perl template creation scripts
+#system(("$ENV{ASYN}/bin/$ENV{EPICS_HOST_ARCH}/makeSupport.pl","-A","$ENV{ASYN}","-B","$ENV{EPICS_BASE}","-t","streamSCPI","$appName"));
+#system(("rm","-rf","configure"));
+#system(("$ENV{EPICS_BASE}/bin/$ENV{EPICS_HOST_ARCH}/makeBaseApp.pl","-a","$ENV{EPICS_HOST_ARCH}","-t","ioc",$appName . $ENV{APP_SUFFIX}));
+#system(("$ENV{EPICS_BASE}/bin/$ENV{EPICS_HOST_ARCH}/makeBaseApp.pl","-a",$ENV{EPICS_HOST_ARCH},"-t","ioc","-i",$appName . $ENV{APP_SUFFIX}));
 
-# edit what was created to suit our application
-for my $fileKey (keys %desiredHash) {
-    replaceHashedVarsInFile(\$fileKey,$desiredHash{$fileKey});
-}
+## edit what was created to suit our application
+#for my $fileKey (keys %desiredHash) {
+    #replaceHashedVarsInFile(\$fileKey,$desiredHash{$fileKey});
+#}
 
-## move the .proto and .db into place if we have them.
-my $protoFile = 'dev' . $appName . '.proto';
-my $dbFile = 'dev' . $appName . '.db';
-system(("cp",$protoFile,'./' . $appName . 'Sup/')) if (-e $protoFile);
-system(("cp",$dbFile,'./' . $appName . 'Sup/')) if (-e $dbFile);
-system(("rm","-rf",$protoFile)) if (-e $protoFile);
-system(("rm","-rf",$dbFile)) if (-e $dbFile);
+### move the .proto and .db into place if we have them.
+#my $protoFile = 'dev' . $appName . '.proto';
+#my $dbFile = 'dev' . $appName . '.db';
+#system(("cp",$protoFile,'./' . $appName . 'Sup/')) if (-e $protoFile);
+#system(("cp",$dbFile,'./' . $appName . 'Sup/')) if (-e $dbFile);
+#system(("rm","-rf",$protoFile)) if (-e $protoFile);
+#system(("rm","-rf",$dbFile)) if (-e $dbFile);
 
 # edit the st.cmd file if it exists and move it into place
 my $stCmd = 'st.cmd';
 my $stCmdPath = catfile($ENV{TOP},$stCmd);
 replaceMacroInFile(\$stCmdPath,\%ENV,'[',']');
-system(("cp",$stCmd,'./iocBoot/' . 'ioc' . $appName . '/')) if (-e $stCmd);
-system(("rm","-rf",$stCmd)) if (-e $stCmd);
+#system(("cp",$stCmd,'./iocBoot/' . 'ioc' . $appName . '/')) if (-e $stCmd);
+#system(("rm","-rf",$stCmd)) if (-e $stCmd);
 
 #system(("make"));
 
@@ -116,6 +116,9 @@ sub replaceMacroInString {
     my ($lb, $rb) = @_;
     $lb = '(' unless defined $lb;
     $rb = ')' unless defined $rb;
+    $lb = '\\' . $lb;
+    $rb = '\\' . $rb;
+    say $lb;
     my @macroMatches = $$inputString =~ m/\$$lb([\w]+)$rb/g; #get all the keys in the string
     for my $key (@macroMatches) {
         if (exists $$macroPointer{$key}) { 
@@ -139,6 +142,7 @@ sub replaceMacroInFile {
     my ($lb, $rb) = @_;
     $lb = '(' unless defined $lb;
     $rb = ')' unless defined $rb;
+    say $lb;
    # say Dumper(\%$targetHash);
     open(my $fh,"+<",$fileName) || die "$0: can't open $fileName for updating: $!";
     my @fileSlurp = <$fh>; #slurp it up.
