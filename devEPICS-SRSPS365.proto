@@ -4,6 +4,8 @@
 @mismatch     { disconnect; }
 
 ReplyTimeout = 500;
+InTerminator = "\n";
+OutTerminator = "\n";
 
 getIDN {
     out "*IDN?";

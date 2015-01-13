@@ -5,6 +5,7 @@ use v5.10;
 use Cwd qw(cwd abs_path);
 use Data::Dumper;
 use File::Basename;
+use File::Spec::Functions;
 
 ############ MAIN VAR DEFS ###########
 my $paramsFileName = './PARAMS';
@@ -35,12 +36,13 @@ for my $line (@outStr) {
 #ensure we're in $TOP
 system(('cd',"$ENV{TOP}"));
 
-#then do stuff.
+#call perl template creation scripts
 system(("$ENV{ASYN}/bin/$ENV{EPICS_HOST_ARCH}/makeSupport.pl","-A","$ENV{ASYN}","-B","$ENV{EPICS_BASE}","-t","streamSCPI","$appName"));
 system(("rm","-rf","configure"));
 system(("$ENV{EPICS_BASE}/bin/$ENV{EPICS_HOST_ARCH}/makeBaseApp.pl","-a","$ENV{EPICS_HOST_ARCH}","-t","ioc",$appName . $ENV{APP_SUFFIX}));
 system(("$ENV{EPICS_BASE}/bin/$ENV{EPICS_HOST_ARCH}/makeBaseApp.pl","-a",$ENV{EPICS_HOST_ARCH},"-t","ioc","-i",$appName . $ENV{APP_SUFFIX}));
 
+# edit what was created to suit our application
 for my $fileKey (keys %desiredHash) {
     replaceHashedVarsInFile(\$fileKey,$desiredHash{$fileKey});
 }
@@ -48,10 +50,19 @@ for my $fileKey (keys %desiredHash) {
 ## move the .proto and .db into place if we have them.
 my $protoFile = 'dev' . $appName . '.proto';
 my $dbFile = 'dev' . $appName . '.db';
-system(("mv",'-f',$protoFile,'./' . $appName . 'Sup/')) if (-e $protoFile);
-system(("mv",'-f',$dbFile,'./' . $appName . 'Sup/')) if (-e $dbFile);
+system(("cp",$protoFile,'./' . $appName . 'Sup/')) if (-e $protoFile);
+system(("cp",$dbFile,'./' . $appName . 'Sup/')) if (-e $dbFile);
+system(("rm","-rf",$protoFile)) if (-e $protoFile);
+system(("rm","-rf",$dbFike)) if (-2 $dbFile);
 
-system(("make"));
+# edit the st.cmd file if it exists and move it into place
+my $stCmd = 'st.cmd';
+my $stCmdPath = catfile($ENV{TOP},$stCmd)
+replaceMacroInFile(\$stCmdPath,\%ENV,'[',']');
+system(("cp",$stCmd,'./iocBoot/' . 'ioc' . $appName . '/')) if (-e $stCmd);
+system(("rm","-rf",$stCmd)) if (-e $stCmd);
+
+#system(("make"));
 
 
 ########### SUB-ROUTINES ############
@@ -97,9 +108,20 @@ sub replaceMacroInString {
     #expects two pointers in @_: 
     #first: the string to be searched and replaced; we will modify it directly
     #second: a hash (passed by reference) of valid macros and their values
+    #third (optional): <left bracket> Macros are of the form $<left bracket>NAME<right bracket>
+    #default is $(NAME), but you can also have $[NAME] or ${NAME}. Third argument is left bracket
+    #fourth (optional): <right bracket> (see above)
     my $inputString = shift(@_); #pull string pointer from @_
     my $macroPointer = shift(@_); #pull hash pointer from @_
-    my @macroMatches = $$inputString =~ m/\$\(([\w]+)\)/g; #get all the keys in the string
+    if scalar(@_) {
+        my $lb = shift(@_);
+        my $rb = shift(@_);
+    }
+    else {
+        my $lb = '('
+        my $rb = ')'
+    }
+    my @macroMatches = $$inputString =~ m/\$$lb([\w]+)$rb/g; #get all the keys in the string
     for my $key (@macroMatches) {
         if (exists $$macroPointer{$key}) { 
             $$inputString =~ s/\$\($key\)/$$macroPointer{$key}/;
@@ -109,6 +131,42 @@ sub replaceMacroInString {
         }
     }
 }
+
+sub replaceMacroInFile {
+    # 1. a string pointer in @_[0] giving a file name
+    # 2. a hash pointer in @_[1] giving the variables (as keys) and the values to replace.
+    # If the variables don't exist in the file, then we add them.
+    # 3. (optional): <left bracket>  I use () brackets for most files, but [] for st.cmd
+    # as there are already macros of the $() type in there.
+    # 4. (optional): <right bracket>
+    if scalar(@_) {
+        my $lb = shift(@_);
+        my $rb = shift(@_);
+    }
+    else {
+        my $lb = '(';
+        my $rb = ')';
+    }
+    my $fileName = abs_path(${shift(@_)});
+    my $targetHash = shift(@_);
+   # say Dumper(\%$targetHash);
+    open(my $fh,"+<",$fileName) || die "$0: can't open $fileName for updating: $!";
+    my @fileSlurp = <$fh>; #slurp it up.
+    close($fh) || die "$0: can't close $fileName. Weird! $!";
+    my $lineNum = 0;
+    for my $line (@fileSlurp) {
+        replaceMacroInString(\$line,$targetHash,$lb,$rb);
+        @fileSlurp[$lineNum] = $line;
+        $lineNum++;
+    }
+    open(my $fh,">",$fileName) || die "$0: can't open $fileName for clobbering: $!";
+    chomp(@fileSlurp);
+    for my $line (@fileSlurp) {
+        say $fh $line;
+    }
+    close($fh) || die "$0: can't close $fileName.  Weird! $!";
+}
+
 
 sub parseParams {
     #expects a string pointer to a file name in @_[0] and a hash pointer containing environment variables
@@ -184,6 +242,9 @@ sub replaceHashedVarsInFile {
     # 1. a string pointer in @_[0] giving a file name
     # 2. a hash pointer in @_[1] giving the variables (as keys) and the values to replace.
     # If the variables don't exist in the file, then we add them.
+    # 3. (optional): <left bracket>  I use () brackets for most files, but [] for st.cmd
+    # as there are already macros of the $() type in there.
+    # 4. (optional): <right bracket>
     my $fileName = abs_path(${shift(@_)});
     my $targetHash = shift(@_);
    # say Dumper(\%$targetHash);
@@ -205,7 +266,7 @@ sub replaceHashedVarsInFile {
         my @m = ($line =~ /$varAssignWithMacros/);
         if (scalar(@m)) {
             if (exists $$targetHash{$m[0]}) {
-                #do not replace assignment operator is +=, instead splice into the line after.
+                #do not replace if assignment operator is +=, instead splice into the line after.
                 my @insertionString = Hstr($m[0],$targetHash); #may be several lines, so we loop over them.
                 my $insertCounter = 0;
                 for my $repLine (@insertionString) {
