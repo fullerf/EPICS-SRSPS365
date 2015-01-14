@@ -42,3 +42,7 @@
     define PARITY = none
     define STOP = 1
 }
+
+@ $(TOP)/dev$(APP_NAME).db {
+    define APP_NAME = $(APP_NAME)
+}
