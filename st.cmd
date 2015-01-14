@@ -15,8 +15,8 @@ epicsEnvSet "TTY" "$(TTY=$[TTY])"
 ##########################################
 # Register all support components
 cd ${TOP}
-dbLoadDatabase(dbd/ps365controlTest.dbd)
-ps365controlTest_registerRecordDeviceDriver(pdbbase)
+dbLoadDatabase(dbd/$[APP_NAME].dbd)
+$[APP_NAME]_registerRecordDeviceDriver(pdbbase)
 
 ##########################################
 # Set up ASYN ports
