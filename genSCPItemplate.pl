@@ -69,6 +69,7 @@ system(("rm","-rf",$dbFile)) if (-e $dbFile);
 # edit the st.cmd file if it exists and move it into place
 my $stCmd = 'st.cmd';
 my $stCmdPath = catfile($ENV{TOP},$stCmd);
+system(("chmod","u+x",$stCmd));
 system(("cp",$stCmd,'./iocBoot/' . 'ioc' . $appName . '/')) if (-e $stCmd);
 system(("rm","-rf",$stCmd)) if (-e $stCmd);
 
