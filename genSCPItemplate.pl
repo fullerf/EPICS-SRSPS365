@@ -49,14 +49,18 @@ system(("rm","-rf","configure"));
 system(("$ENV{EPICS_BASE}/bin/$ENV{EPICS_HOST_ARCH}/makeBaseApp.pl","-a","$ENV{EPICS_HOST_ARCH}","-t","ioc",$appName . $ENV{APP_SUFFIX}));
 system(("$ENV{EPICS_BASE}/bin/$ENV{EPICS_HOST_ARCH}/makeBaseApp.pl","-a",$ENV{EPICS_HOST_ARCH},"-t","ioc","-i",$appName . $ENV{APP_SUFFIX}));
 
+#change the names of the .proto and .db to match the directory name
+my $protoFile = 'dev' . $appName . '.proto';
+my $dbFile = 'dev' . $appName . '.db';
+system(("mv",'devAPPNAME.proto',$protoFile)) if (-e 'devAPPNAME.proto');
+system(("mv",'devAPPNAME.db',$dbFile)) if (-e 'devAPPNAME.db');
+
 # edit what was created to suit our application
 for my $fileKey (keys %desiredHash) {
     fixFile(\$fileKey,$desiredHash{$fileKey},\%ENV);
 }
 
 ### move the .proto and .db into place if we have them.
-my $protoFile = 'dev' . $appName . '.proto';
-my $dbFile = 'dev' . $appName . '.db';
 system(("cp",$protoFile,'./' . $appName . 'Sup/')) if (-e $protoFile);
 system(("cp",$dbFile,'./' . $appName . 'Sup/')) if (-e $dbFile);
 system(("rm","-rf",$protoFile)) if (-e $protoFile);
@@ -65,7 +69,6 @@ system(("rm","-rf",$dbFile)) if (-e $dbFile);
 # edit the st.cmd file if it exists and move it into place
 my $stCmd = 'st.cmd';
 my $stCmdPath = catfile($ENV{TOP},$stCmd);
-replaceMacroInFile(\$stCmdPath,\%ENV,'[',']');
 system(("cp",$stCmd,'./iocBoot/' . 'ioc' . $appName . '/')) if (-e $stCmd);
 system(("rm","-rf",$stCmd)) if (-e $stCmd);
 

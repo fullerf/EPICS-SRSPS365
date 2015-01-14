@@ -13,22 +13,32 @@
     
 
 @ $(TOP)/configure/RELEASE {
-    EPICS_BASE = $(EPICS_BASE) 
-    ASYN = $(ASYN) 
-    STREAM = $(STREAM)
+    ensure EPICS_BASE = $(EPICS_BASE) 
+    ensure ASYN = $(ASYN) 
+    ensure STREAM = $(STREAM)
 }
 
 @ $(TOP)/configure/CONFIG_SITE {
-    CROSS_COMPILER_TARGET_ARCHS =  #leave definition as an empty string
+    ensure CROSS_COMPILER_TARGET_ARCHS =  #leave definition as an empty string
 }
 
 @ $(TOP)/$(APP_NAME)Sup/Makefile {
-    DB_INSTALLS += $(TOP)/$(APP_NAME)Sup/dev$(APP_NAME).proto #will this fuck things up?
+    ensure DB_INSTALLS += $(TOP)/$(APP_NAME)Sup/dev$(APP_NAME).proto
 }
 
 @ $(TOP)/$(APP_NAME)$(APP_SUFFIX)App/src/Makefile {
-    $(APP_NAME)$(APP_SUFFIX)_DBD  += stream.dbd #how about this
-    $(APP_NAME)$(APP_SUFFIX)_DBD  += drvAsynSerialPort.dbd #or this
-    $(APP_NAME)$(APP_SUFFIX)_LIBS += stream #or that
-    $(APP_NAME)$(APP_SUFFIX)_LIBS += asyn #or the other thing?
+    ensure $(APP_NAME)$(APP_SUFFIX)_DBD  += stream.dbd 
+    ensure $(APP_NAME)$(APP_SUFFIX)_DBD  += drvAsynSerialPort.dbd 
+    ensure $(APP_NAME)$(APP_SUFFIX)_LIBS += stream 
+    ensure $(APP_NAME)$(APP_SUFFIX)_LIBS += asyn
+}
+
+@ $(TOP)/st.cmd {
+    define P = x
+    define R = x
+    define TTY = /dev/cu.usbserial-FTWDR32T
+    define BAUD = 9600
+    define BITS = 8
+    define PARITY = none
+    define STOP = 1
 }
