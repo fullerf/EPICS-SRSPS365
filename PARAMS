@@ -28,10 +28,15 @@
 
 @ $(TOP)/$(APP_NAME)$(APP_SUFFIX)App/src/Makefile {
     ensure $(APP_NAME)$(APP_SUFFIX)_DBD  += stream.dbd 
-    ensure $(APP_NAME)$(APP_SUFFIX)_DBD  += drvAsynSerialPort.dbd 
+    ensure $(APP_NAME)$(APP_SUFFIX)_DBD  += drvAsynSerialPort.dbd
+    ensure $(APP_NAME)$(APP_SUFFIX)_DBD  += asyn.dbd
     ensure $(APP_NAME)$(APP_SUFFIX)_LIBS += stream 
     ensure $(APP_NAME)$(APP_SUFFIX)_LIBS += asyn
 }
+
+#@ $(TOP)/$(APP_NAME)$(APP_SUFFIX)App/Db/Makefile {
+    #ensure DB_INSTALLS += $(ASYN)/db/asynRecord.db
+#}
 
 @ $(TOP)/st.cmd {
     define P = x
