@@ -22,14 +22,14 @@
     ensure CROSS_COMPILER_TARGET_ARCHS = $[EMPTY] after <CROSS_COMPILER_TARGET_ARCHS> 
 }
 
-@ $(TOP)/$(APP_NAME)Sup/Makefile {
-    ensure DB_INSTALLS += $(TOP)/$(APP_NAME)Sup/dev$(APP_NAME).proto
-}
+#@ $(TOP)/$(APP_NAME)Sup/Makefile {
+    #ensure DB_INSTALLS += $(TOP)/$(APP_NAME)Sup/dev$(APP_NAME).proto
+#}
 
 @ $(TOP)/$(APP_NAME)$(APP_SUFFIX)App/src/Makefile {
-    ensure $(APP_NAME)$(APP_SUFFIX)_DBD  += stream.dbd              after <will be made up from these files> 
-    ensure $(APP_NAME)$(APP_SUFFIX)_DBD  += drvAsynSerialPort.dbd   after <will be made up from these files>
-    ensure $(APP_NAME)$(APP_SUFFIX)_DBD  += asyn.dbd                after <will be made up from these files>
+    ensure $(APP_NAME)$(APP_SUFFIX)_DBD  += stream.dbd              after <Include dbd files from all support> 
+    ensure $(APP_NAME)$(APP_SUFFIX)_DBD  += drvAsynSerialPort.dbd   after <Include dbd files from all support>
+    ensure $(APP_NAME)$(APP_SUFFIX)_DBD  += asyn.dbd                after <Include dbd files from all support>
     ensure $(APP_NAME)$(APP_SUFFIX)_LIBS += stream                  after <support libraries needed by> 
     ensure $(APP_NAME)$(APP_SUFFIX)_LIBS += asyn                    after <support libraries needed by>
 }
