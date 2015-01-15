@@ -10,7 +10,8 @@ use File::Spec::Functions;
 ############ MAIN VAR DEFS ###########
 my $paramsFileName = './PARAMS';
 our $appName = getCurrFolder(); #and the desired app name is given by the folder we're in.
-#globally useful regular expressions
+#globally useful regular expressions.  All of these expressions collect named variables, which can be accessed
+#after matching in the special hash %+, individual elements as: %+{name}.
 my $lhs = '(?<lhs>[\w\/\.\(\)\$\-\[\]]*)';
 my $rhs = '(?<rhs>[\w\/\.\(\)\$\-\[\]]*)';
 my $cmd = '(?<cmd>[\w]*)';
@@ -23,7 +24,7 @@ my $hVa1 = '^[\s]*' . $cmd . '[\s]*' . $lhs . '[\s]*' . $op . '[\s]*' . $rhs . '
 my $hVa2 = '^[\s]*' . $cmd . '[\s]*' . $lhs . '[\s]*' . $op . '[\s]*' . $rhs . '[\s]*' . $hook . '[\s]*$';
 my $cmdVa1 = '^[\s]*' . $cmd . '[\s]*' . $lhs . '[\s]*' . $op . '[\s]*' . $rhs . '[\s]*' . $comment . '$';
 my $cmdVa2 = '^[\s]*' . $cmd . '[\s]*' . $lhs . '[\s]*' . $op . '[\s]*' . $rhs . '[\s]*$';
-our $varAssign = $va1 . '|' . $va2;
+our $varAssign = $va1 . '|' . $va2;  #note: regex2 | regex2 gives "short circuit" or "left most" matching.
 our $cmdVarAssign = $hVa1 . '|' . $hVa2 . '|' . $cmdVa1 . '|' . $cmdVa2;
 our $headingDef = '^[\s]*[\@][\s]*' . $lhs . '[\s]*(?<remainder>[^\n]*)';
 our $whoAmI = basename($0);
@@ -42,37 +43,37 @@ say Dumper(\%desiredHash);
 #}
 
 #ensure we're in $TOP
-system(('cd',"$ENV{TOP}"));
+#system(('cd',"$ENV{TOP}"));
 
 #call perl template creation scripts
-#system(("$ENV{ASYN}/bin/$ENV{EPICS_HOST_ARCH}/makeSupport.pl","-A","$ENV{ASYN}","-B","$ENV{EPICS_BASE}","-t","streamSCPI","$appName"));
-#system(("rm","-rf","configure"));
-#system(("$ENV{EPICS_BASE}/bin/$ENV{EPICS_HOST_ARCH}/makeBaseApp.pl","-a","$ENV{EPICS_HOST_ARCH}","-t","ioc",$appName . $ENV{APP_SUFFIX}));
-#system(("$ENV{EPICS_BASE}/bin/$ENV{EPICS_HOST_ARCH}/makeBaseApp.pl","-a",$ENV{EPICS_HOST_ARCH},"-t","ioc","-i",$appName . $ENV{APP_SUFFIX}));
+system(("$ENV{ASYN}/bin/$ENV{EPICS_HOST_ARCH}/makeSupport.pl","-A","$ENV{ASYN}","-B","$ENV{EPICS_BASE}","-t","streamSCPI","$appName"));
+system(("rm","-rf","configure"));
+system(("$ENV{EPICS_BASE}/bin/$ENV{EPICS_HOST_ARCH}/makeBaseApp.pl","-a","$ENV{EPICS_HOST_ARCH}","-t","ioc",$appName . $ENV{APP_SUFFIX}));
+system(("$ENV{EPICS_BASE}/bin/$ENV{EPICS_HOST_ARCH}/makeBaseApp.pl","-a",$ENV{EPICS_HOST_ARCH},"-t","ioc","-i",$appName . $ENV{APP_SUFFIX}));
 
-##change the names of the .proto and .db to match the directory name
-#my $protoFile = 'dev' . $appName . '.proto';
-#my $dbFile = 'dev' . $appName . '.db';
-#system(("mv",'devAPPNAME.proto',$protoFile)) if (-e 'devAPPNAME.proto');
-#system(("mv",'devAPPNAME.db',$dbFile)) if (-e 'devAPPNAME.db');
+#change the names of the .proto and .db to match the directory name
+my $protoFile = 'dev' . $appName . '.proto';
+my $dbFile = 'dev' . $appName . '.db';
+system(("mv",'devAPPNAME.proto',$protoFile)) if (-e 'devAPPNAME.proto');
+system(("mv",'devAPPNAME.db',$dbFile)) if (-e 'devAPPNAME.db');
 
-## edit what was created to suit our application
-#for my $fileKey (keys %desiredHash) {
-    #fixFile(\$fileKey,$desiredHash{$fileKey},\%ENV);
-#}
+# edit what was created to suit our application
+for my $fileKey (keys %desiredHash) {
+    fixFile(\$fileKey,$desiredHash{$fileKey},\%ENV);
+}
 
-#### move the .proto and .db into place if we have them.
-#system(("cp",$protoFile,'./' . $appName . 'Sup/')) if (-e $protoFile);
-#system(("cp",$dbFile,'./' . $appName . 'Sup/')) if (-e $dbFile);
-#system(("rm","-rf",$protoFile)) if (-e $protoFile);
-#system(("rm","-rf",$dbFile)) if (-e $dbFile);
+### move the .proto and .db into place if we have them.
+system(("cp",$protoFile,'./' . $appName . 'Sup/')) if (-e $protoFile);
+system(("cp",$dbFile,'./' . $appName . 'Sup/')) if (-e $dbFile);
+system(("rm","-rf",$protoFile)) if (-e $protoFile);
+system(("rm","-rf",$dbFile)) if (-e $dbFile);
 
-## edit the st.cmd file if it exists and move it into place
-#my $stCmd = 'st.cmd';
-#my $stCmdPath = catfile($ENV{TOP},$stCmd);
-#system(("chmod","u+x",$stCmd));
-#system(("cp",$stCmd,'./iocBoot/' . 'ioc' . $appName . '/')) if (-e $stCmd);
-#system(("rm","-rf",$stCmd)) if (-e $stCmd);
+# edit the st.cmd file if it exists and move it into place
+my $stCmd = 'st.cmd';
+my $stCmdPath = catfile($ENV{TOP},$stCmd);
+system(("chmod","u+x",$stCmd));
+system(("cp",$stCmd,'./iocBoot/' . 'ioc' . $appName . '/')) if (-e $stCmd);
+system(("rm","-rf",$stCmd)) if (-e $stCmd);
 
 #system(("make"));
 
@@ -286,11 +287,12 @@ sub fixFile {
                             my $hookLine = findHookLine(\@fileSlurp,$$targetHash{ensure}{$lhs}{POS}[$insertCounter]);
                             $splicePoint = $hookLine+1 if ($$targetHash{ensure}{$lhs}{HOOK}[$insertCounter] eq 'after');
                             $splicePoint = $hookLine-1 if ($$targetHash{ensure}{$lhs}{HOOK}[$insertCounter] eq 'before');
+                            say "found hook \"$$targetHash{ensure}{$lhs}{POS}[$insertCounter]\" for $lhs";
                         }
                         else {
                             $splicePoint = $lineNum+1;
                         }
-                        say "found hook \"$$targetHash{ensure}{$lhs}{POS}[$insertCounter]\", inserting at line $splicePoint";
+                        say "\t inserting at line $splicePoint";
                         splice @fileSlurp, $splicePoint, 0, $repLine;
                     }
                     else { #otherwise replace the line
@@ -325,18 +327,20 @@ sub fixFile {
     }
     #now we loop back again over the file and replace any thing defined with "define" command.
     my $counter = 0;
+    #hack: I need to add the ability to put in empty strings.  I'll stuff them in the $envHash
+    hashMerge($envHash,{'EMPTY' => ' '});
     for my $line (@fileSlurp) {
         replaceMacroInString(\$line,$$targetHash{define},'[',']',$envHash);
         @fileSlurp[$counter] = $line;
         $counter++;
     }
     #write out the file
-    open(my $fh,">",$fileName) || die "$0: can't open $fileName for clobbering: $!";
-    chomp(@fileSlurp);
-    for my $line (@fileSlurp) {
-        say $fh $line;
-    }
-    close($fh) || die "$0: can't close $fileName.  Weird! $!";
+    #open(my $fh,">",$fileName) || die "$0: can't open $fileName for clobbering: $!";
+    #chomp(@fileSlurp);
+    #for my $line (@fileSlurp) {
+        #say $fh $line;
+    #}
+    #close($fh) || die "$0: can't close $fileName.  Weird! $!";
 }
 
 sub Hstr {
