@@ -37,10 +37,11 @@ my %desiredHash = parseParams(\$paramsFileName,\%ENV); #also populates some entr
 #say Dumper(\%desiredHash);
 
 my @outStr = HoHoHstr(\%desiredHash);
-say Dumper(\%desiredHash);
-#for my $line (@outStr) {
-    #say $line;
-#}
+#say Dumper(\%desiredHash);
+for my $line (@outStr) {
+    say $line;
+}
+say "Parsing of PARAMS complete";
 
 #ensure we're in $TOP
 #system(('cd',"$ENV{TOP}"));
@@ -62,7 +63,7 @@ for my $fileKey (keys %desiredHash) {
     fixFile(\$fileKey,$desiredHash{$fileKey},\%ENV);
 }
 
-### move the .proto and .db into place if we have them.
+## move the .proto and .db into place if we have them.
 system(("cp",$protoFile,'./' . $appName . 'Sup/')) if (-e $protoFile);
 system(("cp",$dbFile,'./' . $appName . 'Sup/')) if (-e $dbFile);
 system(("rm","-rf",$protoFile)) if (-e $protoFile);
@@ -75,7 +76,7 @@ system(("chmod","u+x",$stCmd));
 system(("cp",$stCmd,'./iocBoot/' . 'ioc' . $appName . '/')) if (-e $stCmd);
 system(("rm","-rf",$stCmd)) if (-e $stCmd);
 
-#system(("make"));
+system(("make"));
 
 
 ########### SUB-ROUTINES ############
@@ -215,7 +216,7 @@ sub parseParams {
                 my $hook = exists $+{hook} ? $+{hook} : undef;
                 my $pos = exists $+{position} ? $+{position} : undef;
                 my $comment = exists $+{comment} ? $+{comment} : undef;
-                say $hook;
+                
                 if (exists $varHash{$currentKey}{$cmdType}{$lhs}) {
                     push(@{ $varHash{$currentKey}{$cmdType}{$lhs}{OP} },         $+{op});
                     push(@{ $varHash{$currentKey}{$cmdType}{$lhs}{RHS} },        $rhs);
@@ -287,15 +288,17 @@ sub fixFile {
                             my $hookLine = findHookLine(\@fileSlurp,$$targetHash{ensure}{$lhs}{POS}[$insertCounter]);
                             $splicePoint = $hookLine+1 if ($$targetHash{ensure}{$lhs}{HOOK}[$insertCounter] eq 'after');
                             $splicePoint = $hookLine-1 if ($$targetHash{ensure}{$lhs}{HOOK}[$insertCounter] eq 'before');
-                            say "found hook \"$$targetHash{ensure}{$lhs}{POS}[$insertCounter]\" for $lhs";
+                            #say "found hook \"$$targetHash{ensure}{$lhs}{POS}[$insertCounter]\" for $lhs";
                         }
                         else {
+                            #say "no hook found for $lhs, but op was +=";
                             $splicePoint = $lineNum+1;
                         }
-                        say "\t inserting at line $splicePoint";
+                        #say "\t inserting at line $splicePoint";
                         splice @fileSlurp, $splicePoint, 0, $repLine;
                     }
                     else { #otherwise replace the line
+                        #say "replacing line $lineNum for $lhs";
                         splice @fileSlurp, $lineNum, 1, $repLine; 
                     }
                     $insertCounter++;
@@ -307,7 +310,6 @@ sub fixFile {
     }
     my @unsatedKeys = keys %{$$targetHash{ensure}};
     for my $key (@unsatedKeys) {
-        say "hi";
         my @insertionString = Hstr($key,$$targetHash{ensure});
         my $c = 0;
         for my $repLine (@insertionString) {
@@ -316,7 +318,7 @@ sub fixFile {
                 my $hookLine = findHookLine(\@fileSlurp,$$targetHash{ensure}{$key}{POS}[$c]);
                 $splicePoint = $hookLine+1 if ($$targetHash{ensure}{$key}{HOOK}[$c] eq 'after');
                 $splicePoint = $hookLine-1 if ($$targetHash{ensure}{$key}{HOOK}[$c] eq 'before');
-                say "unsated $key: found hook \"$$targetHash{ensure}{$key}{POS}[$c]\", inserting at line $splicePoint";
+                #say "unsated $key: found hook \"$$targetHash{ensure}{$key}{POS}[$c]\", inserting at line $splicePoint";
             }
             else {
                 $splicePoint = $endOfIntroComments;
@@ -330,17 +332,19 @@ sub fixFile {
     #hack: I need to add the ability to put in empty strings.  I'll stuff them in the $envHash
     hashMerge($envHash,{'EMPTY' => ' '});
     for my $line (@fileSlurp) {
+        #my $oldLine = $line;
         replaceMacroInString(\$line,$$targetHash{define},'[',']',$envHash);
+        #say "replaced $oldLine with: $line" if ($oldLine ne $line);
         @fileSlurp[$counter] = $line;
         $counter++;
     }
     #write out the file
-    #open(my $fh,">",$fileName) || die "$0: can't open $fileName for clobbering: $!";
-    #chomp(@fileSlurp);
-    #for my $line (@fileSlurp) {
-        #say $fh $line;
-    #}
-    #close($fh) || die "$0: can't close $fileName.  Weird! $!";
+    open(my $fh,">",$fileName) || die "$0: can't open $fileName for clobbering: $!";
+    chomp(@fileSlurp);
+    for my $line (@fileSlurp) {
+        say $fh $line;
+    }
+    close($fh) || die "$0: can't close $fileName.  Weird! $!";
 }
 
 sub Hstr {

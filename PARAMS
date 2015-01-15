@@ -15,7 +15,7 @@
 @ $(TOP)/configure/RELEASE {
     ensure EPICS_BASE = $(EPICS_BASE) 
     ensure ASYN = $(ASYN) before <# EPICS_BASE>
-    ensure STREAM = $(STREAM) before #<# EPICS_BASE>
+    ensure STREAM = $(STREAM) before <# EPICS_BASE>
 }
 
 @ $(TOP)/configure/CONFIG_SITE {
