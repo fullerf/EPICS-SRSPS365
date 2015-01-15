@@ -11,19 +11,21 @@ use File::Spec::Functions;
 my $paramsFileName = './PARAMS';
 our $appName = getCurrFolder(); #and the desired app name is given by the folder we're in.
 #globally useful regular expressions
-our $var = '([\w\/\.\(\)\$\-\[\]]*)';
-our $cmd = '([\w]*)';
-our $op = '([\=\+]+)';
-our $hook = '([a-z]+)[\s]*\<([^\<\>]+)\>';
-our $va1 = '^[\s]*' . $var . '[\s]*' . $op . '[\s]*' . $var . '[\s]*[\#](.*)';
-our $va2 = '^[\s]*' . $var . '[\s]*' . $op . '[\s]*' . $var . '[\s]*';
-our $hVa1 = '^[\s]*' . $cmd . '[\s]*' . $var . '[\s]*' . $op . '[\s]*' . $var . '[\s]*' . $hook '[\s]*';
-our $hVa2 = '^[\s]*' . $cmd . '[\s]*' . $var . '[\s]*' . $op . '[\s]*' . $var . '[\s]*' . $hook . '[\s]*[\#](.*)';
-our $cmdVa1 = '^[\s]*' . $cmd . '[\s]*' . $var . '[\s]*' . $op . '[\s]*' . $var . '[\s]*[\#](.*)';
-our $cmdVa2 = '^[\s]*' . $cmd . '[\s]*' . $var . '[\s]*' . $op . '[\s]*' . $var . '[\s]*';
-our $varAssign = '(?|' . $va1 . '|' . $va2 . ')';
-our $cmdVarAssign = '(?|' . $hVa2 . '|' . $hVa1 . '|' . $cmdVa1 . '|' . $cmdVa2 . ')';
-our $headingDef = '^[\s]*[\@][\s]*' . $var . '[\s]*([^\n]*)';
+my $lhs = '(?<lhs>[\w\/\.\(\)\$\-\[\]]*)';
+my $rhs = '(?<rhs>[\w\/\.\(\)\$\-\[\]]*)';
+my $cmd = '(?<cmd>[\w]*)';
+my $op = '(?<op>[\=\+]+)';
+my $comment = '(?<comment>\#.*)';
+my $hook = '(?<hook>[a-z]+)[\s]*\<(?<position>[^\<\>]+)\>';
+my $va1 = '^[\s]*' . $lhs . '[\s]*' . $op . '[\s]*' . $rhs . '[\s]*' . $comment . '$';
+my $va2 = '^[\s]*' . $lhs . '[\s]*' . $op . '[\s]*' . $rhs . '[\s]*$';
+my $hVa1 = '^[\s]*' . $cmd . '[\s]*' . $lhs . '[\s]*' . $op . '[\s]*' . $rhs . '[\s]*' . $hook . '[\s]*' . $comment . '$';
+my $hVa2 = '^[\s]*' . $cmd . '[\s]*' . $lhs . '[\s]*' . $op . '[\s]*' . $rhs . '[\s]*' . $hook . '[\s]*$';
+my $cmdVa1 = '^[\s]*' . $cmd . '[\s]*' . $lhs . '[\s]*' . $op . '[\s]*' . $rhs . '[\s]*' . $comment . '$';
+my $cmdVa2 = '^[\s]*' . $cmd . '[\s]*' . $lhs . '[\s]*' . $op . '[\s]*' . $rhs . '[\s]*$';
+our $varAssign = $va1 . '|' . $va2;
+our $cmdVarAssign = $hVa1 . '|' . $hVa2 . '|' . $cmdVa1 . '|' . $cmdVa2;
+our $headingDef = '^[\s]*[\@][\s]*' . $lhs . '[\s]*(?<remainder>[^\n]*)';
 our $whoAmI = basename($0);
 
 
@@ -43,36 +45,36 @@ say Dumper(\%desiredHash);
 system(('cd',"$ENV{TOP}"));
 
 #call perl template creation scripts
-system(("$ENV{ASYN}/bin/$ENV{EPICS_HOST_ARCH}/makeSupport.pl","-A","$ENV{ASYN}","-B","$ENV{EPICS_BASE}","-t","streamSCPI","$appName"));
-system(("rm","-rf","configure"));
-system(("$ENV{EPICS_BASE}/bin/$ENV{EPICS_HOST_ARCH}/makeBaseApp.pl","-a","$ENV{EPICS_HOST_ARCH}","-t","ioc",$appName . $ENV{APP_SUFFIX}));
-system(("$ENV{EPICS_BASE}/bin/$ENV{EPICS_HOST_ARCH}/makeBaseApp.pl","-a",$ENV{EPICS_HOST_ARCH},"-t","ioc","-i",$appName . $ENV{APP_SUFFIX}));
+#system(("$ENV{ASYN}/bin/$ENV{EPICS_HOST_ARCH}/makeSupport.pl","-A","$ENV{ASYN}","-B","$ENV{EPICS_BASE}","-t","streamSCPI","$appName"));
+#system(("rm","-rf","configure"));
+#system(("$ENV{EPICS_BASE}/bin/$ENV{EPICS_HOST_ARCH}/makeBaseApp.pl","-a","$ENV{EPICS_HOST_ARCH}","-t","ioc",$appName . $ENV{APP_SUFFIX}));
+#system(("$ENV{EPICS_BASE}/bin/$ENV{EPICS_HOST_ARCH}/makeBaseApp.pl","-a",$ENV{EPICS_HOST_ARCH},"-t","ioc","-i",$appName . $ENV{APP_SUFFIX}));
 
-#change the names of the .proto and .db to match the directory name
-my $protoFile = 'dev' . $appName . '.proto';
-my $dbFile = 'dev' . $appName . '.db';
-system(("mv",'devAPPNAME.proto',$protoFile)) if (-e 'devAPPNAME.proto');
-system(("mv",'devAPPNAME.db',$dbFile)) if (-e 'devAPPNAME.db');
+##change the names of the .proto and .db to match the directory name
+#my $protoFile = 'dev' . $appName . '.proto';
+#my $dbFile = 'dev' . $appName . '.db';
+#system(("mv",'devAPPNAME.proto',$protoFile)) if (-e 'devAPPNAME.proto');
+#system(("mv",'devAPPNAME.db',$dbFile)) if (-e 'devAPPNAME.db');
 
-# edit what was created to suit our application
-for my $fileKey (keys %desiredHash) {
-    fixFile(\$fileKey,$desiredHash{$fileKey},\%ENV);
-}
+## edit what was created to suit our application
+#for my $fileKey (keys %desiredHash) {
+    #fixFile(\$fileKey,$desiredHash{$fileKey},\%ENV);
+#}
 
-### move the .proto and .db into place if we have them.
-system(("cp",$protoFile,'./' . $appName . 'Sup/')) if (-e $protoFile);
-system(("cp",$dbFile,'./' . $appName . 'Sup/')) if (-e $dbFile);
-system(("rm","-rf",$protoFile)) if (-e $protoFile);
-system(("rm","-rf",$dbFile)) if (-e $dbFile);
+#### move the .proto and .db into place if we have them.
+#system(("cp",$protoFile,'./' . $appName . 'Sup/')) if (-e $protoFile);
+#system(("cp",$dbFile,'./' . $appName . 'Sup/')) if (-e $dbFile);
+#system(("rm","-rf",$protoFile)) if (-e $protoFile);
+#system(("rm","-rf",$dbFile)) if (-e $dbFile);
 
-# edit the st.cmd file if it exists and move it into place
-my $stCmd = 'st.cmd';
-my $stCmdPath = catfile($ENV{TOP},$stCmd);
-system(("chmod","u+x",$stCmd));
-system(("cp",$stCmd,'./iocBoot/' . 'ioc' . $appName . '/')) if (-e $stCmd);
-system(("rm","-rf",$stCmd)) if (-e $stCmd);
+## edit the st.cmd file if it exists and move it into place
+#my $stCmd = 'st.cmd';
+#my $stCmdPath = catfile($ENV{TOP},$stCmd);
+#system(("chmod","u+x",$stCmd));
+#system(("cp",$stCmd,'./iocBoot/' . 'ioc' . $appName . '/')) if (-e $stCmd);
+#system(("rm","-rf",$stCmd)) if (-e $stCmd);
 
-system(("make"));
+#system(("make"));
 
 
 ########### SUB-ROUTINES ############
@@ -176,20 +178,20 @@ sub parseParams {
         $currLine++;
         #first look to see if a variable is being defined out of a scope block.  If so, add it to hash of macro vars.
         unless (defined $openScope) {
-            my @macroMatches = ($line =~ /$varAssign/);
-            if (scalar(@macroMatches)) {
-                #macros defined within the script have absolute precedence (the will overwrite)
-                replaceMacroInString(\$macroMatches[2],$envHash); #allow expansion with previous definitions.
-                hashMerge($envHash,{$macroMatches[0] => $macroMatches[2]}); #skip assignment operator (it must be =) and I don't care about the comments.
+            if  ($line =~ /$varAssign/) {
+                #macros defined within the script have absolute precedence (they will overwrite)
+                my $lhs = $+{lhs};
+                my $rhs = $+{rhs};
+                replaceMacroInString(\$rhs,$envHash); #allow expansion with previous definitions.
+                hashMerge($envHash,{$lhs => $rhs}); #skip assignment operator (it must be =) and I don't care about the comments.
                 next;
             }
         }
         #match a file direction, getting: 1: directory, 2: everything afterwards (delimited from previous by white space)
-        my @headingMatches = ($line =~ /$headingDef/);
-        if (scalar(@headingMatches)!=0) {
-            $currentKey = @headingMatches[0];
+        if ($line =~ /$headingDef/) {
+            $currentKey = $+{lhs};
             replaceMacroInString(\$currentKey,$envHash);
-            $line = @headingMatches[1];
+            $line = $+{remainder};
         }
         @scopeChecker = ($line =~  /^[\s]*\{(.*)/);
         if (scalar(@scopeChecker)!=0)
@@ -201,27 +203,31 @@ sub parseParams {
         if (defined $openScope) {
             #match a variable assignment, getting: 1: varname, 2: assignment operator, 3: assigned directory, 4: optional comment
             my @subMatches = ($line =~ /$cmdVarAssign/);
-            if (scalar(@subMatches)!=0) {
-                my $cmdType = shift(@subMatches); # first match is the cmd type, so shift it off the array.
-                my $lhs = shift(@subMatches); #second match is the lhs of the var assignment
+            if ($line =~ /$cmdVarAssign/) {
+                my $cmdType = $+{cmd}; #cmd key always exists if match
+                my $lhs = $+{lhs}; #as does lhs key
+                my $rhs = $+{rhs};
                 replaceMacroInString(\$lhs,$envHash); #expand macros in LHS
                 sanitizeDirectory(\$lhs); #sanitize LHS            
-                replaceMacroInString(\$subMatches[1],$envHash); #expand macros in RHS
-                sanitizeDirectory(\$subMatches[1]); #sanitize RHS
-                
+                replaceMacroInString(\$rhs,$envHash); #expand macros in RHS
+                sanitizeDirectory(\$rhs); #sanitize RHS
+                my $hook = exists $+{hook} ? $+{hook} : undef;
+                my $pos = exists $+{position} ? $+{position} : undef;
+                my $comment = exists $+{comment} ? $+{comment} : undef;
+                say $hook;
                 if (exists $varHash{$currentKey}{$cmdType}{$lhs}) {
-                    push(@{ $varHash{$currentKey}{$cmdType}{$lhs}{OP} },         $subMatches[0]);
-                    push(@{ $varHash{$currentKey}{$cmdType}{$lhs}{RHS} },        $subMatches[1]);
-                    push(@{ $varHash{$currentKey}{$cmdType}{$lhs}{HOOK} },       $subMatches[2]);
-                    push(@{ $varHash{$currentKey}{$cmdType}{$lhs}{POS} },        $subMatches[3]);
-                    push(@{ $varHash{$currentKey}{$cmdType}{$lhs}{COMMENT} },    $subMatches[4]);
+                    push(@{ $varHash{$currentKey}{$cmdType}{$lhs}{OP} },         $+{op});
+                    push(@{ $varHash{$currentKey}{$cmdType}{$lhs}{RHS} },        $rhs);
+                    push(@{ $varHash{$currentKey}{$cmdType}{$lhs}{HOOK} },       $hook);
+                    push(@{ $varHash{$currentKey}{$cmdType}{$lhs}{POS} },        $pos);
+                    push(@{ $varHash{$currentKey}{$cmdType}{$lhs}{COMMENT} },    $comment);
                 }
                 else {
-                    $varHash{$currentKey}{$cmdType}{$lhs}{OP} =      [$subMatches[0]];
-                    $varHash{$currentKey}{$cmdType}{$lhs}{RHS} =     [$subMatches[1]];
-                    $varHash{$currentKey}{$cmdType}{$lhs}{HOOK} =    [$subMatches[2]];
-                    $varHash{$currentKey}{$cmdType}{$lhs}{POS} =     [$subMatches[3]];
-                    $varHash{$currentKey}{$cmdType}{$lhs}{COMMENT} = [$subMatches[4]];                         
+                    $varHash{$currentKey}{$cmdType}{$lhs}{OP} =      [$+{op}];
+                    $varHash{$currentKey}{$cmdType}{$lhs}{RHS} =     [$rhs];
+                    $varHash{$currentKey}{$cmdType}{$lhs}{HOOK} =    [$hook];
+                    $varHash{$currentKey}{$cmdType}{$lhs}{POS} =     [$pos];
+                    $varHash{$currentKey}{$cmdType}{$lhs}{COMMENT} = [$comment];                         
                 }
             }
         }
@@ -266,25 +272,25 @@ sub fixFile {
         else {
             undef $findIntroComments;
         }
-        my @m = ($line =~ /$varAssign/);
-        if (scalar(@m)) {
-            if (exists $$targetHash{ensure}{$m[0]}) {
+        if ($line =~ /$varAssign/) {
+            my $lhs = $+{lhs};
+            if (exists $$targetHash{ensure}{$lhs}) {
                 #do not replace if assignment operator is +=, instead splice into the line after.
-                my @insertionString = Hstr($m[0],$$targetHash{ensure}); #may be several lines, so we loop over them.
+                my @insertionString = Hstr($lhs,$$targetHash{ensure}); #may be several lines, so we loop over them.
                 my $insertCounter = 0;
                 for my $repLine (@insertionString) {
-                    if ($$targetHash{ensure}{$m[0]}{OP}[$insertCounter] eq "+=") {
+                    if ($$targetHash{ensure}{$lhs}{OP}[$insertCounter] eq "+=") {
                         #check for a hook
                         my $splicePoint = undef;
-                        if (defined $$targetHash{ensure}{$m[0]}{HOOK}[$insertCounter]) {
-                            my $hookLine = findHookLine(\@fileSlurp,$$targetHash{ensure}{$m[0]}{POS}[$insertCounter]);
-                            $splicePoint = $hookLine+1 if ($$targetHash{ensure}{$m[0]}{HOOK}[$insertCounter] eq 'after');
-                            $splicePoint = $hookLine-1 if ($$targetHash{ensure}{$m[0]}{HOOK}[$insertCounter] eq 'before');
+                        if (defined $$targetHash{ensure}{$lhs}{HOOK}[$insertCounter]) {
+                            my $hookLine = findHookLine(\@fileSlurp,$$targetHash{ensure}{$lhs}{POS}[$insertCounter]);
+                            $splicePoint = $hookLine+1 if ($$targetHash{ensure}{$lhs}{HOOK}[$insertCounter] eq 'after');
+                            $splicePoint = $hookLine-1 if ($$targetHash{ensure}{$lhs}{HOOK}[$insertCounter] eq 'before');
                         }
                         else {
                             $splicePoint = $lineNum+1;
                         }
-                        say "found hook \"$$targetHash{ensure}{$m[0]}{POS}[$insertCounter]\", inserting at line $splicePoint";
+                        say "found hook \"$$targetHash{ensure}{$lhs}{POS}[$insertCounter]\", inserting at line $splicePoint";
                         splice @fileSlurp, $splicePoint, 0, $repLine;
                     }
                     else { #otherwise replace the line
@@ -292,7 +298,7 @@ sub fixFile {
                     }
                     $insertCounter++;
                 }
-                delete($$targetHash{ensure}{$m[0]});
+                delete($$targetHash{ensure}{$lhs});
             }
         }
         $lineNum++;
