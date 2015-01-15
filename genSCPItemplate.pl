@@ -44,7 +44,15 @@ for my $line (@outStr) {
 say "Parsing of PARAMS complete";
 
 #ensure we're in $TOP
-#system(('cd',"$ENV{TOP}"));
+system(('cd',"$ENV{TOP}"));
+
+#create backups for re-installation
+system(('mkdir','install'));
+system(('cp','genSCPItemplate.pl',"$ENV{TOP}/install/"));
+system(('cp','PARAMS',"$ENV{TOP}/install/"));
+system(('cp','devAPPNAME.proto',"$ENV{TOP}/install/"));if (-e 'devAPPNAME.proto')
+system(('cp','devAPPNAME.db',"$ENV{TOP}/install/")) if (-e 'devAPPNAME.db');
+system(('cp','st.cmd',"$ENV{TOP}/install/")) if (-e 'st.cmd');
 
 #call perl template creation scripts
 system(("$ENV{ASYN}/bin/$ENV{EPICS_HOST_ARCH}/makeSupport.pl","-A","$ENV{ASYN}","-B","$ENV{EPICS_BASE}","-t","streamSCPI","$appName"));
