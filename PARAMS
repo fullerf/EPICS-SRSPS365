@@ -14,12 +14,12 @@
 
 @ $(TOP)/configure/RELEASE {
     ensure EPICS_BASE = $(EPICS_BASE) 
-    ensure ASYN = $(ASYN) 
-    ensure STREAM = $(STREAM)
+    ensure ASYN = $(ASYN) before <# EPICS_BASE>
+    ensure STREAM = $(STREAM) #before <# EPICS_BASE>
 }
 
 @ $(TOP)/configure/CONFIG_SITE {
-    ensure CROSS_COMPILER_TARGET_ARCHS =  #leave definition as an empty string
+    ensure CROSS_COMPILER_TARGET_ARCHS = $[] after <CROSS_COMPILER_TARGET_ARCHS>  #$[] will be replaced by empty string
 }
 
 @ $(TOP)/$(APP_NAME)Sup/Makefile {
@@ -27,11 +27,11 @@
 }
 
 @ $(TOP)/$(APP_NAME)$(APP_SUFFIX)App/src/Makefile {
-    ensure $(APP_NAME)$(APP_SUFFIX)_DBD  += stream.dbd 
-    ensure $(APP_NAME)$(APP_SUFFIX)_DBD  += drvAsynSerialPort.dbd
-    ensure $(APP_NAME)$(APP_SUFFIX)_DBD  += asyn.dbd
-    ensure $(APP_NAME)$(APP_SUFFIX)_LIBS += stream 
-    ensure $(APP_NAME)$(APP_SUFFIX)_LIBS += asyn
+    ensure $(APP_NAME)$(APP_SUFFIX)_DBD  += stream.dbd              after <will be made up from these files> 
+    ensure $(APP_NAME)$(APP_SUFFIX)_DBD  += drvAsynSerialPort.dbd   after <will be made up from these files>
+    ensure $(APP_NAME)$(APP_SUFFIX)_DBD  += asyn.dbd                after <will be made up from these files>
+    ensure $(APP_NAME)$(APP_SUFFIX)_LIBS += stream                  after <support libraries needed by> 
+    ensure $(APP_NAME)$(APP_SUFFIX)_LIBS += asyn                    after <support libraries needed by>
 }
 
 #@ $(TOP)/$(APP_NAME)$(APP_SUFFIX)App/Db/Makefile {

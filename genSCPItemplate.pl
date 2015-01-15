@@ -12,18 +12,17 @@ my $paramsFileName = './PARAMS';
 our $appName = getCurrFolder(); #and the desired app name is given by the folder we're in.
 #globally useful regular expressions
 our $var = '([\w\/\.\(\)\$\-]*)';
-our $varNM = '([\w\/\.\-]*)';
 our $cmd = '([\w]*)';
 our $op = '([\=\+]+)';
+our $hook = '([\w]+)[\s]*\<([^\<\>]+)\>';
 our $va1 = '^[\s]*' . $var . '[\s]*' . $op . '[\s]*' . $var . '[\s]*[\#](.*)';
 our $va2 = '^[\s]*' . $var . '[\s]*' . $op . '[\s]*' . $var . '[\s]*';
-our $va3 = '^[\s]*' . $varNM . '[\s]*' . $op . '[\s]*' . $varNM . '[\s]*[\#](.*)';
-our $va4 = '^[\s]*' . $varNM . '[\s]*' . $op . '[\s]*' . $varNM . '[\s]*';
+our $hVa1 = '^[\s]*' . $cmd . '[\s]*' . $var . '[\s]*' . $op . '[\s]*' . $var . '[\s]*' . $hook;
+our $hVa2 = '^[\s]*' . $cmd . '[\s]*' . $var . '[\s]*' . $op . '[\s]*' . $var . '[\s]*' . $hook . '[\s]*[\#](.*)';
 our $cmdVa1 = '^[\s]*' . $cmd . '[\s]*' . $var . '[\s]*' . $op . '[\s]*' . $var . '[\s]*[\#](.*)';
 our $cmdVa2 = '^[\s]*' . $cmd . '[\s]*' . $var . '[\s]*' . $op . '[\s]*' . $var . '[\s]*';
-our $varAssignWithMacros = '(?|' . $va1 . '|' . $va2 . ')';
-our $varAssign =  '(?|' . $va3 . '|' . $va4 . ')';
-our $cmdVarAssign = '(?|' . $cmdVa1 . '|' . $cmdVa2 . ')';
+our $varAssign = '(?|' . $va1 . '|' . $va2 . ')';
+our $cmdVarAssign = '(?|' . $hVa2 . '|' . $hVa1 . '|' . $cmdVa1 . '|' . $cmdVa2 . ')';
 our $headingDef = '^[\s]*[\@][\s]*' . $var . '[\s]*([^\n]*)';
 our $whoAmI = basename($0);
 
@@ -35,10 +34,10 @@ my %desiredHash = parseParams(\$paramsFileName,\%ENV); #also populates some entr
 #say Dumper(\%desiredHash);
 
 my @outStr = HoHoHstr(\%desiredHash);
-#say Dumper(\@outStr);
-for my $line (@outStr) {
-    say $line;
-}
+say Dumper(\%desiredHash);
+#for my $line (@outStr) {
+    #say $line;
+#}
 
 #ensure we're in $TOP
 system(('cd',"$ENV{TOP}"));
@@ -130,7 +129,7 @@ sub replaceMacroInString {
     $rb = ')' unless defined $rb;
     $lb = '\\' . $lb;
     $rb = '\\' . $rb;
-    my $macroPattern = '\$' . $lb . '([\w]+)' . $rb;
+    my $macroPattern = '\$' . $lb . '([\w]*)' . $rb;
     my @macroMatches = $$inputString =~ m/$macroPattern/g; #get all the keys in the string
     for my $key (@macroMatches) {
         if (exists $$macroPointer{$key}) {
@@ -211,20 +210,36 @@ sub parseParams {
                 sanitizeDirectory(\$subMatches[1]); #sanitize RHS
                 
                 if (exists $varHash{$currentKey}{$cmdType}{$lhs}) {
-                    push(@{ $varHash{$currentKey}{$cmdType}{$lhs}{OP} },     $subMatches[0]);
-                    push(@{ $varHash{$currentKey}{$cmdType}{$lhs}{RHS} },    $subMatches[1]);
-                    push(@{ $varHash{$currentKey}{$cmdType}{$lhs}{COMMENT} },$subMatches[2]);
+                    push(@{ $varHash{$currentKey}{$cmdType}{$lhs}{OP} },         $subMatches[0]);
+                    push(@{ $varHash{$currentKey}{$cmdType}{$lhs}{RHS} },        $subMatches[1]);
+                    push(@{ $varHash{$currentKey}{$cmdType}{$lhs}{HOOK} },       $subMatches[2]);
+                    push(@{ $varHash{$currentKey}{$cmdType}{$lhs}{POS} },        $subMatches[3]);
+                    push(@{ $varHash{$currentKey}{$cmdType}{$lhs}{COMMENT} },    $subMatches[4]);
                 }
                 else {
                     $varHash{$currentKey}{$cmdType}{$lhs}{OP} =      [$subMatches[0]];
                     $varHash{$currentKey}{$cmdType}{$lhs}{RHS} =     [$subMatches[1]];
-                    $varHash{$currentKey}{$cmdType}{$lhs}{COMMENT} = [$subMatches[2]];                         
+                    $varHash{$currentKey}{$cmdType}{$lhs}{HOOK} =    [$subMatches[2]];
+                    $varHash{$currentKey}{$cmdType}{$lhs}{POS} =     [$subMatches[3]];
+                    $varHash{$currentKey}{$cmdType}{$lhs}{COMMENT} = [$subMatches[4]];                         
                 }
             }
         }
         undef $openScope if $line =~ /^[^\}^\n]*\}.*/;
     }
     return %varHash;
+}
+
+sub findHookLine {
+    my ($fArrPtr, $posStr) = @_;
+    my $match = undef;
+    my $c = 0;
+    for my $line (@$fArrPtr) {
+        my $match = $line =~ /$posStr/;
+        last if $match;
+        $c++;
+    }
+    return $c;
 }
 
 sub fixFile {
@@ -251,15 +266,26 @@ sub fixFile {
         else {
             undef $findIntroComments;
         }
-        my @m = ($line =~ /$varAssignWithMacros/);
+        my @m = ($line =~ /$varAssign/);
         if (scalar(@m)) {
             if (exists $$targetHash{ensure}{$m[0]}) {
                 #do not replace if assignment operator is +=, instead splice into the line after.
-                my @insertionString = Hstr($m[0],$targetHash->{ensure}); #may be several lines, so we loop over them.
+                my @insertionString = Hstr($m[0],$$targetHash{ensure}); #may be several lines, so we loop over them.
                 my $insertCounter = 0;
                 for my $repLine (@insertionString) {
                     if ($$targetHash{ensure}{$m[0]}{OP}[$insertCounter] eq "+=") {
-                        splice @fileSlurp, $lineNum+1, 0, $repLine;
+                        #check for a hook
+                        my $splicePoint = undef;
+                        if (defined $$targetHash{ensure}{$m[0]}{HOOK}[$insertCounter]) {
+                            my $hookLine = findHookLine(\@fileSlurp,$$targetHash{ensure}{$m[0]}{POS}[$insertCounter]);
+                            $splicePoint = $hookLine+1 if ($$targetHash{ensure}{$m[0]}{HOOK}[$insertCounter] eq 'after');
+                            $splicePoint = $hookLine-1 if ($$targetHash{ensure}{$m[0]}{HOOK}[$insertCounter] eq 'before');
+                        }
+                        else {
+                            $splicePoint = $lineNum+1;
+                        }
+                        say "found hook \"$$targetHash{ensure}{$m[0]}{POS}[$insertCounter]\", inserting at line $splicePoint";
+                        splice @fileSlurp, $splicePoint, 0, $repLine;
                     }
                     else { #otherwise replace the line
                         splice @fileSlurp, $lineNum, 1, $repLine; 
@@ -272,12 +298,24 @@ sub fixFile {
         $lineNum++;
     }
     my @unsatedKeys = keys %{$$targetHash{ensure}};
-    splice @fileSlurp, $endOfIntroComments, 0, "", "#auto-inserted by: $whoAmI";
-    $endOfIntroComments = $endOfIntroComments+2;
     for my $key (@unsatedKeys) {
-        my @insertionString = Hstr($key,$targetHash->{ensure});
-        splice @fileSlurp, $endOfIntroComments, 0, @insertionString;
-        $endOfIntroComments = $endOfIntroComments + scalar(@insertionString);
+        say "hi";
+        my @insertionString = Hstr($key,$$targetHash{ensure});
+        my $c = 0;
+        for my $repLine (@insertionString) {
+            my $splicePoint = undef;
+            if (defined $$targetHash{ensure}{$key}{HOOK}[$c]) {
+                my $hookLine = findHookLine(\@fileSlurp,$$targetHash{ensure}{$key}{POS}[$c]);
+                $splicePoint = $hookLine+1 if ($$targetHash{ensure}{$key}{HOOK}[$c] eq 'after');
+                $splicePoint = $hookLine-1 if ($$targetHash{ensure}{$key}{HOOK}[$c] eq 'before');
+                say "unsated: found hook \"$$targetHash{ensure}{$key}{POS}[$c]\", inserting at line $splicePoint";
+            }
+            else {
+                $splicePoint = $endOfIntroComments;
+            }
+            splice @fileSlurp, $splicePoint, 0, $repLine;
+            $c++;
+        }
     }
     #now we loop back again over the file and replace any thing defined with "define" command.
     my $counter = 0;
@@ -286,6 +324,7 @@ sub fixFile {
         @fileSlurp[$counter] = $line;
         $counter++;
     }
+    #write out the file
     open(my $fh,">",$fileName) || die "$0: can't open $fileName for clobbering: $!";
     chomp(@fileSlurp);
     for my $line (@fileSlurp) {
