@@ -308,7 +308,7 @@ sub fixFile {
                 my $hookLine = findHookLine(\@fileSlurp,$$targetHash{ensure}{$key}{POS}[$c]);
                 $splicePoint = $hookLine+1 if ($$targetHash{ensure}{$key}{HOOK}[$c] eq 'after');
                 $splicePoint = $hookLine-1 if ($$targetHash{ensure}{$key}{HOOK}[$c] eq 'before');
-                say "unsated: found hook \"$$targetHash{ensure}{$key}{POS}[$c]\", inserting at line $splicePoint";
+                say "unsated $key: found hook \"$$targetHash{ensure}{$key}{POS}[$c]\", inserting at line $splicePoint";
             }
             else {
                 $splicePoint = $endOfIntroComments;
