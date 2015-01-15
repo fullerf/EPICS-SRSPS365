@@ -11,13 +11,13 @@ use File::Spec::Functions;
 my $paramsFileName = './PARAMS';
 our $appName = getCurrFolder(); #and the desired app name is given by the folder we're in.
 #globally useful regular expressions
-our $var = '([\w\/\.\(\)\$\-]*)';
+our $var = '([\w\/\.\(\)\$\-\[\]]*)';
 our $cmd = '([\w]*)';
 our $op = '([\=\+]+)';
-our $hook = '([\w]+)[\s]*\<([^\<\>]+)\>';
+our $hook = '([a-z]+)[\s]*\<([^\<\>]+)\>';
 our $va1 = '^[\s]*' . $var . '[\s]*' . $op . '[\s]*' . $var . '[\s]*[\#](.*)';
 our $va2 = '^[\s]*' . $var . '[\s]*' . $op . '[\s]*' . $var . '[\s]*';
-our $hVa1 = '^[\s]*' . $cmd . '[\s]*' . $var . '[\s]*' . $op . '[\s]*' . $var . '[\s]*' . $hook;
+our $hVa1 = '^[\s]*' . $cmd . '[\s]*' . $var . '[\s]*' . $op . '[\s]*' . $var . '[\s]*' . $hook '[\s]*';
 our $hVa2 = '^[\s]*' . $cmd . '[\s]*' . $var . '[\s]*' . $op . '[\s]*' . $var . '[\s]*' . $hook . '[\s]*[\#](.*)';
 our $cmdVa1 = '^[\s]*' . $cmd . '[\s]*' . $var . '[\s]*' . $op . '[\s]*' . $var . '[\s]*[\#](.*)';
 our $cmdVa2 = '^[\s]*' . $cmd . '[\s]*' . $var . '[\s]*' . $op . '[\s]*' . $var . '[\s]*';

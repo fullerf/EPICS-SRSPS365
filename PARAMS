@@ -19,7 +19,7 @@
 }
 
 @ $(TOP)/configure/CONFIG_SITE {
-    ensure CROSS_COMPILER_TARGET_ARCHS = $[] after <CROSS_COMPILER_TARGET_ARCHS>  #$[] will be replaced by empty string
+    ensure CROSS_COMPILER_TARGET_ARCHS = $[EMPTY] after <CROSS_COMPILER_TARGET_ARCHS> 
 }
 
 @ $(TOP)/$(APP_NAME)Sup/Makefile {
