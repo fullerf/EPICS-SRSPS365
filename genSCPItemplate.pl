@@ -50,7 +50,7 @@ system(('cd',"$ENV{TOP}"));
 system(('mkdir','install'));
 system(('cp','genSCPItemplate.pl',"$ENV{TOP}/install/"));
 system(('cp','PARAMS',"$ENV{TOP}/install/"));
-system(('cp','devAPPNAME.proto',"$ENV{TOP}/install/"));if (-e 'devAPPNAME.proto')
+system(('cp','devAPPNAME.proto',"$ENV{TOP}/install/")) if (-e 'devAPPNAME.proto');
 system(('cp','devAPPNAME.db',"$ENV{TOP}/install/")) if (-e 'devAPPNAME.db');
 system(('cp','st.cmd',"$ENV{TOP}/install/")) if (-e 'st.cmd');
 
